@@ -168,86 +168,91 @@ export default function VoiceContactPage() {
   };
   
   const renderContent = () => {
+    const isSheetOpen = activeTab === 'recents' || activeTab === 'keypad';
+    const handleSheetChange = (isOpen: boolean) => {
+      if (!isOpen) {
+        setActiveTab('favourites'); // or any default tab you prefer when closing
+      }
+    };
+  
     return (
-      <Sheet open={activeTab !== 'favourites' && activeTab !== 'contacts'} onOpenChange={(isOpen) => !isOpen && setActiveTab('recents')}>
-        {(() => {
-          switch(activeTab) {
-            case 'recents':
-              return (
-                <SheetContent side="bottom" className="h-4/5 rounded-t-2xl">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Recents</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-4 h-full overflow-y-auto">
-                    <div className="space-y-2">
-                      {mockCallHistory.map((call) => (
-                        <div key={call.id}>
-                          <div className="flex items-center justify-between py-2">
-                            <div className="flex items-center gap-4">
-                              <Avatar>
-                                <AvatarImage src={call.contact.image} alt={call.contact.name} data-ai-hint="person portrait" />
-                                <AvatarFallback>{call.contact.initials}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-semibold">{call.contact.name}</p>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                  <CallTypeIcon type={call.type} />
-                                  <span>{call.time}</span>
-                                </div>
-                              </div>
+      <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
+        <SheetContent
+          side="bottom"
+          className={`rounded-t-2xl ${activeTab === 'recents' ? 'h-4/5' : 'h-auto pb-8'}`}
+          // The onOpenChange on Sheet will handle closing, so we don't need interaction handlers here.
+        >
+          {activeTab === 'recents' && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Recents</SheetTitle>
+              </SheetHeader>
+              <div className="py-4 h-full overflow-y-auto">
+                <div className="space-y-2">
+                  {mockCallHistory.map((call) => (
+                    <div key={call.id}>
+                      <div className="flex items-center justify-between py-2">
+                        <div className="flex items-center gap-4">
+                          <Avatar>
+                            <AvatarImage src={call.contact.image} alt={call.contact.name} data-ai-hint="person portrait" />
+                            <AvatarFallback>{call.contact.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">{call.contact.name}</p>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <CallTypeIcon type={call.type} />
+                              <span>{call.time}</span>
                             </div>
-                            <a href={`tel:${call.contact.phone}`} aria-label={`Call ${call.contact.name}`}>
-                              <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
-                                <Phone className="w-5 h-5" />
-                              </Button>
-                            </a>
                           </div>
-                          <Separator />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </SheetContent>
-              );
-            case 'keypad':
-              return (
-                <SheetContent side="bottom" className="h-auto pb-8 rounded-t-2xl">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center"><Grid3x3 className="w-5 h-5 mr-2" /> Keypad</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-4 flex flex-col items-center">
-                      <div className="relative w-full max-w-xs mb-4">
-                          <Input 
-                              readOnly 
-                              value={dialerInput}
-                              className="text-3xl h-14 text-center pr-10"
-                              placeholder="Enter number"
-                          />
-                          {dialerInput && (
-                              <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
-                                  <Delete className="w-6 h-6" />
-                              </Button>
-                          )}
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
-                          {dialerButtons.map((key) => (
-                              <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
-                                  {key}
-                              </Button>
-                          ))}
-                      </div>
-                       <div className="mt-4 w-full max-w-xs">
-                          <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
-                              <Phone className="w-6 h-6" />
+                        <a href={`tel:${call.contact.phone}`} aria-label={`Call ${call.contact.name}`}>
+                          <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
+                            <Phone className="w-5 h-5" />
                           </Button>
+                        </a>
                       </div>
+                      <Separator />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {activeTab === 'keypad' && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center"><Grid3x3 className="w-5 h-5 mr-2" /> Keypad</SheetTitle>
+              </SheetHeader>
+              <div className="py-4 flex flex-col items-center">
+                  <div className="relative w-full max-w-xs mb-4">
+                      <Input 
+                          readOnly 
+                          value={dialerInput}
+                          className="text-3xl h-14 text-center pr-10"
+                          placeholder="Enter number"
+                      />
+                      {dialerInput && (
+                          <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
+                              <Delete className="w-6 h-6" />
+                          </Button>
+                      )}
                   </div>
-                </SheetContent>
-              );
-            default:
-              return null;
-          }
-        })()}
+                  <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
+                      {dialerButtons.map((key) => (
+                          <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
+                              {key}
+                          </Button>
+                      ))}
+                  </div>
+                   <div className="mt-4 w-full max-w-xs">
+                      <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
+                          <Phone className="w-6 h-6" />
+                      </Button>
+                  </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
       </Sheet>
     );
   }
