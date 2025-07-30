@@ -366,7 +366,7 @@ export default function VoiceContactPage() {
 
   return (
     <div className="bg-background min-h-screen flex flex-col items-center p-4 font-body text-foreground">
-      <div className="w-full max-w-md mx-auto flex flex-col h-full">
+      <div className="w-full max-w-md mx-auto flex flex-col h-full flex-grow">
         <header className="flex items-center justify-between py-6">
           <div className="w-10 h-10"></div>
           <h1 className="text-4xl font-bold text-primary font-headline">Voice Contact</h1>
@@ -377,7 +377,7 @@ export default function VoiceContactPage() {
           </Link>
         </header>
 
-        <main className="flex flex-col items-center gap-6 my-4 flex-grow">
+        <main className="flex flex-col items-center justify-center gap-6 flex-grow">
           <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-28 h-28 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
             {isLoading ? (
               <Loader2 className="w-12 h-12 text-primary-foreground animate-spin" />
@@ -447,3 +447,4 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
