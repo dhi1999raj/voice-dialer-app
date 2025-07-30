@@ -101,7 +101,7 @@ export default function VoiceContactPage() {
         variant: "destructive",
       });
     }
-  }, [isLoading, toast, allContacts]); // Add allContacts to dependency array
+  }, [toast]); // Simplified dependencies
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
@@ -447,5 +447,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
-    
