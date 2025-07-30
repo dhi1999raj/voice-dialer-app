@@ -414,8 +414,8 @@ export default function VoiceContactPage() {
                       <Input 
                           readOnly 
                           value={dialerInput}
-                          className="text-3xl h-14 text-center pr-10"
-                          placeholder="Enter number"
+                          className="text-3xl h-14 text-center pr-10 border-none focus-visible:ring-0"
+                          placeholder=""
                       />
                       {dialerInput && (
                           <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
