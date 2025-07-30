@@ -425,14 +425,14 @@ export default function VoiceContactPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
                       {dialerButtons.map((key) => (
-                          <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
+                          <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-20 w-20 rounded-full text-2xl font-bold">
                               {key}
                           </Button>
                       ))}
                   </div>
                    <div className="mt-4 w-full max-w-xs">
-                      <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
-                          <Phone className="w-6 h-6" />
+                      <Button onClick={handleDialerCall} size="lg" className="w-20 h-20 rounded-full bg-green-500 hover:bg-green-600 mx-auto flex items-center justify-center">
+                          <Phone className="w-8 h-8" />
                       </Button>
                   </div>
               </div>
@@ -521,4 +521,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
