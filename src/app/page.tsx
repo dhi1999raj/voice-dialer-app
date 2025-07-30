@@ -380,9 +380,9 @@ export default function VoiceContactPage() {
         <main className="flex flex-col items-center justify-center gap-6 flex-grow">
           <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-28 h-28 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
             {isLoading ? (
-              <Loader2 className="w-12 h-12 text-primary-foreground animate-spin" />
+              <Loader2 className="w-16 h-16 text-primary-foreground animate-spin" />
             ) : (
-              <Mic className="w-12 h-12 text-primary-foreground" />
+              <Mic className="w-16 h-16 text-primary-foreground" />
             )}
           </Button>
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
@@ -447,4 +447,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
