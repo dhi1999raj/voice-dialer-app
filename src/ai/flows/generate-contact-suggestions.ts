@@ -21,9 +21,10 @@ export type GenerateContactSuggestionsInput = z.infer<
 >;
 
 const GenerateContactSuggestionsOutputSchema = z.object({
-  suggestions: z
-    .array(z.string())
-    .describe('A list of suggested contacts based on the voice input. Can be empty.'),
+  contactToCall: z
+    .string()
+    .optional()
+    .describe('The name of the single contact to call if an exact match is found.'),
 });
 export type GenerateContactSuggestionsOutput = z.infer<
   typeof GenerateContactSuggestionsOutputSchema
@@ -39,16 +40,16 @@ const prompt = ai.definePrompt({
   name: 'generateContactSuggestionsPrompt',
   input: {schema: GenerateContactSuggestionsInputSchema},
   output: {schema: GenerateContactSuggestionsOutputSchema},
-  prompt: `You are a helpful assistant designed to suggest contacts based on voice input.
+  prompt: `You are a helpful assistant designed to find a contact to call based on voice input.
 
   The user said: "{{voiceInput}}"
   Here is the list of available contacts: {{contactList}}
   
-  Your task is to suggest a list of contacts that the user might be trying to call.
-  - If the voice input exactly matches a contact in the contact list (case-insensitive), return only that contact.
-  - Otherwise, suggest contacts that sound similar to the voice input, or that are likely matches given common nicknames.
-  - If no likely matches are found in the contact list, return an empty array for the suggestions.
-  - Do not include any contacts that are not in the provided contact list.
+  Your task is to identify a single contact to call from the list.
+  - You MUST find the best, case-insensitive match for the "{{voiceInput}}" from the provided contact list.
+  - If you find a single, unambiguous match, return that contact's name in the 'contactToCall' field.
+  - If the input is ambiguous or matches multiple contacts (e.g., "John"), do not return any name.
+  - If no likely match is found, do not return any name.
   `,
 });
 

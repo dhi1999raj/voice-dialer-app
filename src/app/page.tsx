@@ -38,7 +38,6 @@ declare global {
 export default function VoiceContactPage() {
   const [isListening, setIsListening] = useState(false);
   const [statusText, setStatusText] = useState("Tap the mic to start");
-  const [suggestions, setSuggestions] = useState<FetchedContact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
@@ -65,7 +64,6 @@ export default function VoiceContactPage() {
       recognition.onstart = () => {
         setIsListening(true);
         setStatusText("Listening...");
-        setSuggestions([]);
       };
 
       recognition.onend = () => {
@@ -149,21 +147,19 @@ export default function VoiceContactPage() {
         contactList: contacts.map(c => c.name),
       });
 
-      if (result.suggestions && result.suggestions.length > 0) {
-        const foundContacts = contacts.filter(contact => result.suggestions.includes(contact.name));
-        setSuggestions(foundContacts);
-
-        if (foundContacts.length === 1) {
-          setStatusText(`Calling ${foundContacts[0].name}...`);
-          setTimeout(() => {
-             window.location.href = `tel:${foundContacts[0].phone}`;
-          }, 1500);
+      if (result.contactToCall) {
+        const foundContact = contacts.find(contact => contact.name === result.contactToCall);
+        if (foundContact) {
+            setStatusText(`Calling ${foundContact.name}...`);
+            setTimeout(() => {
+                window.location.href = `tel:${foundContact.phone}`;
+            }, 1500);
         } else {
-          setStatusText("Who should I call?");
+            // This case should ideally not happen if prompt works correctly
+            setStatusText(`Contact "${result.contactToCall}" not found in your list.`);
         }
       } else {
         setStatusText("Sorry, I couldn't find anyone by that name.");
-        setSuggestions([]);
       }
     } catch (error) {
       console.error("Error generating contact suggestions:", error);
@@ -398,39 +394,6 @@ export default function VoiceContactPage() {
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
         </main>
 
-        <div className="space-y-8 pb-24">
-          {suggestions.length > 0 && (
-            <Card className="shadow-lg animate-in fade-in-0 zoom-in-95">
-              <CardHeader>
-                <CardTitle className="flex items-center"><Mic className="w-5 h-5 mr-2" /> Suggestions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {suggestions.map((contact) => (
-                    <div key={contact.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarImage src={contact.image} alt={contact.name} data-ai-hint="person photo" />
-                          <AvatarFallback>{contact.initials}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{contact.name}</p>
-                          <p className="text-sm text-muted-foreground">{contact.phone}</p>
-                        </div>
-                      </div>
-                      <a href={`tel:${contact.phone}`} aria-label={`Call ${contact.name}`}>
-                        <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
-                          <Phone className="w-5 h-5" />
-                        </Button>
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-        
         {renderContent()}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
