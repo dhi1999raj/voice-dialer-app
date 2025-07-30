@@ -147,7 +147,7 @@ export default function VoiceContactPage() {
 
     recognitionRef.current = recognition;
 
-  }, [toast, handleVoiceCommand, allContacts]);
+  }, [toast, allContacts, handleVoiceCommand]);
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
@@ -389,11 +389,11 @@ export default function VoiceContactPage() {
         </header>
 
         <main className="flex flex-col items-center justify-center gap-6 flex-grow">
-          <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-40 h-40 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
+          <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-48 h-48 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
             {isLoading ? (
-              <Loader2 className="w-20 h-20 text-primary-foreground animate-spin" />
+              <Loader2 className="w-24 h-24 text-primary-foreground animate-spin" />
             ) : (
-              <Mic className="w-20 h-20 text-primary-foreground" />
+              <Mic className="w-24 h-24 text-primary-foreground" />
             )}
           </Button>
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
@@ -425,5 +425,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
-    
