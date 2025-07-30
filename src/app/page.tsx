@@ -184,17 +184,10 @@ export default function VoiceContactPage() {
 
     recognitionRef.current = recognition;
 
-    // Simulate an incoming call for demo purposes
-    const spamCallTimeout = setTimeout(() => {
-        const testNumber = '1-800-555-1234';
-        handleSpamCheck(testNumber);
-    }, 5000);
-
     return () => {
        if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
       }
-      clearTimeout(spamCallTimeout);
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
@@ -485,7 +478,7 @@ export default function VoiceContactPage() {
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
         </main>
 
-        <AlertDialog open={!!spamCall} onOpenChange={(open) => !open && setSpamCall(null)}>
+        <AlertDialog open={!!spamCall}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -537,5 +530,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
-    
