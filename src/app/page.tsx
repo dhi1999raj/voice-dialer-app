@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Keypad, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming } from 'lucide-react';
+import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -227,7 +227,7 @@ export default function VoiceContactPage() {
 
         <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8">
           <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Keypad">
-            <Keypad className="w-8 h-8 text-accent-foreground" />
+            <Calculator className="w-8 h-8 text-accent-foreground" />
           </Button>
         </div>
       </div>
