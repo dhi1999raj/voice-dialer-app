@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3 } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -369,9 +370,11 @@ export default function VoiceContactPage() {
         <header className="flex items-center justify-between py-6">
           <div className="w-10 h-10"></div>
           <h1 className="text-4xl font-bold text-primary font-headline">Voice Contact</h1>
-          <Button variant="ghost" size="icon" aria-label="Settings">
-            <Settings className="w-6 h-6" />
-          </Button>
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" aria-label="Settings">
+              <Settings className="w-6 h-6" />
+            </Button>
+          </Link>
         </header>
 
         <main className="flex flex-col items-center gap-6 my-4 flex-grow">
@@ -444,5 +447,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
-    
