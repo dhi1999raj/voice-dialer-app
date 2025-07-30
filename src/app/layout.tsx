@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: 'Voice Contact',
+  title: 'Voice Dialer',
   description: 'An app to call contacts using your voice.',
 };
 

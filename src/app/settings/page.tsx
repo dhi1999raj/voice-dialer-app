@@ -130,7 +130,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground space-y-2">
-                <p>Voice Contact App v1.0.0</p>
+                <p>Voice Dialer App v1.0.0</p>
                 <p>Made with love by Dhiraj Kumar</p>
                  <Link href="#" className="text-primary hover:underline">
                     Send Feedback

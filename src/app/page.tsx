@@ -369,7 +369,7 @@ export default function VoiceContactPage() {
       <div className="w-full max-w-md mx-auto flex flex-col h-full flex-grow">
         <header className="flex items-center justify-between py-6">
           <div className="w-10 h-10"></div>
-          <h1 className="text-4xl font-bold text-primary font-headline">Voice Contact</h1>
+          <h1 className="text-4xl font-bold text-primary font-headline">Voice Dialer</h1>
           <Link href="/settings">
             <Button variant="ghost" size="icon" aria-label="Settings">
               <Settings className="w-6 h-6" />
