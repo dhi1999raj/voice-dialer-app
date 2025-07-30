@@ -47,6 +47,11 @@ export default function VoiceContactPage() {
   const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [callHistory] = useState<Call[]>([]);
+  const allContactsRef = useRef(allContacts);
+
+  useEffect(() => {
+    allContactsRef.current = allContacts;
+  }, [allContacts]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -90,7 +95,7 @@ export default function VoiceContactPage() {
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setStatusText(`You said: "${transcript}"`);
-        handleVoiceCommand(transcript);
+        handleVoiceCommand(transcript, allContactsRef.current);
       };
 
       recognitionRef.current = recognition;
@@ -123,11 +128,11 @@ export default function VoiceContactPage() {
     }
   };
 
-  const handleVoiceCommand = async (command: string) => {
+  const handleVoiceCommand = async (command: string, contacts: FetchedContact[]) => {
     setIsLoading(true);
     setStatusText("Thinking...");
 
-    if (allContacts.length === 0) {
+    if (contacts.length === 0) {
         setStatusText("Please grant contact access first.");
         toast({
             title: "No Contacts",
@@ -141,11 +146,11 @@ export default function VoiceContactPage() {
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
         voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
-        contactList: allContacts.map(c => c.name),
+        contactList: contacts.map(c => c.name),
       });
 
       if (result.suggestions && result.suggestions.length > 0) {
-        const foundContacts = allContacts.filter(contact => result.suggestions.includes(contact.name));
+        const foundContacts = contacts.filter(contact => result.suggestions.includes(contact.name));
         setSuggestions(foundContacts);
 
         if (foundContacts.length === 1) {
@@ -257,7 +262,7 @@ export default function VoiceContactPage() {
               </SheetHeader>
               <div className="py-4 h-full overflow-y-auto">
                 <div className="space-y-2">
-                  {callHistory.map((call) => (
+                  {callHistory.length > 0 ? callHistory.map((call) => (
                     <div key={call.id}>
                       <div className="flex items-center justify-between py-2">
                         <div className="flex items-center gap-4">
@@ -281,7 +286,11 @@ export default function VoiceContactPage() {
                       </div>
                       <Separator />
                     </div>
-                  ))}
+                  )) : (
+                     <div className="text-center py-10">
+                      <p className="text-muted-foreground">No recent calls.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
