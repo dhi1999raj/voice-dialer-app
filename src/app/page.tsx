@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings } from 'lucide-react';
+import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ export default function VoiceContactPage() {
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
   const [dialerInput, setDialerInput] = useState("");
+  const [activeTab, setActiveTab] = useState('recents');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -111,7 +112,10 @@ export default function VoiceContactPage() {
 
         if (foundContacts.length === 1) {
           setStatusText(`Calling ${foundContacts[0].name}...`);
-          window.location.href = `tel:${foundContacts[0].phone}`;
+          // Simulating call
+          setTimeout(() => {
+             window.location.href = `tel:${foundContacts[0].phone}`;
+          }, 1500);
         } else {
           setStatusText("Who should I call?");
         }
@@ -162,6 +166,91 @@ export default function VoiceContactPage() {
       window.location.href = `tel:${dialerInput}`;
     }
   };
+  
+  const renderContent = () => {
+    return (
+      <Sheet open={activeTab !== 'favourites' && activeTab !== 'contacts'} onOpenChange={(isOpen) => !isOpen && setActiveTab('recents')}>
+        {(() => {
+          switch(activeTab) {
+            case 'recents':
+              return (
+                <SheetContent side="bottom" className="h-4/5 rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Recents</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4 h-full overflow-y-auto">
+                    <div className="space-y-2">
+                      {mockCallHistory.map((call) => (
+                        <div key={call.id}>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-4">
+                              <Avatar>
+                                <AvatarImage src={call.contact.image} alt={call.contact.name} data-ai-hint="person portrait" />
+                                <AvatarFallback>{call.contact.initials}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold">{call.contact.name}</p>
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <CallTypeIcon type={call.type} />
+                                  <span>{call.time}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <a href={`tel:${call.contact.phone}`} aria-label={`Call ${call.contact.name}`}>
+                              <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
+                                <Phone className="w-5 h-5" />
+                              </Button>
+                            </a>
+                          </div>
+                          <Separator />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </SheetContent>
+              );
+            case 'keypad':
+              return (
+                <SheetContent side="bottom" className="h-auto pb-8 rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center"><Grid3x3 className="w-5 h-5 mr-2" /> Keypad</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4 flex flex-col items-center">
+                      <div className="relative w-full max-w-xs mb-4">
+                          <Input 
+                              readOnly 
+                              value={dialerInput}
+                              className="text-3xl h-14 text-center pr-10"
+                              placeholder="Enter number"
+                          />
+                          {dialerInput && (
+                              <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
+                                  <Delete className="w-6 h-6" />
+                              </Button>
+                          )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
+                          {dialerButtons.map((key) => (
+                              <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
+                                  {key}
+                              </Button>
+                          ))}
+                      </div>
+                       <div className="mt-4 w-full max-w-xs">
+                          <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
+                              <Phone className="w-6 h-6" />
+                          </Button>
+                      </div>
+                  </div>
+                </SheetContent>
+              );
+            default:
+              return null;
+          }
+        })()}
+      </Sheet>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen flex flex-col items-center p-4 font-body text-foreground">
@@ -217,92 +306,29 @@ export default function VoiceContactPage() {
             </Card>
           )}
         </div>
+        
+        {renderContent()}
 
-        <Sheet>
-          <SheetTrigger asChild>
-            <div className="fixed bottom-6 left-6 md:bottom-8 md:left-8">
-              <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Keypad">
-                <Calculator className="w-8 h-8 text-accent-foreground" />
-              </Button>
-            </div>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto pb-8 rounded-t-2xl">
-            <SheetHeader>
-              <SheetTitle className="flex items-center"><Calculator className="w-5 h-5 mr-2" /> Keypad</SheetTitle>
-            </SheetHeader>
-            <div className="py-4 flex flex-col items-center">
-                <div className="relative w-full max-w-xs mb-4">
-                    <Input 
-                        readOnly 
-                        value={dialerInput}
-                        className="text-3xl h-14 text-center pr-10"
-                        placeholder="Enter number"
-                    />
-                    {dialerInput && (
-                        <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
-                            <Delete className="w-6 h-6" />
-                        </Button>
-                    )}
-                </div>
-                <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
-                    {dialerButtons.map((key) => (
-                        <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
-                            {key}
-                        </Button>
-                    ))}
-                </div>
-                 <div className="mt-4 w-full max-w-xs">
-                    <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
-                        <Phone className="w-6 h-6" />
-                    </Button>
-                </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet>
-          <SheetTrigger asChild>
-            <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8">
-              <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Call History">
-                <History className="w-8 h-8 text-accent-foreground" />
-              </Button>
-            </div>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-4/5 rounded-t-2xl">
-            <SheetHeader>
-              <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Call History</SheetTitle>
-            </SheetHeader>
-            <div className="py-4 h-full overflow-y-auto">
-              <div className="space-y-2">
-                {mockCallHistory.map((call) => (
-                  <div key={call.id}>
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarImage src={call.contact.image} alt={call.contact.name} data-ai-hint="person portrait" />
-                          <AvatarFallback>{call.contact.initials}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{call.contact.name}</p>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <CallTypeIcon type={call.type} />
-                            <span>{call.time}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <a href={`tel:${call.contact.phone}`} aria-label={`Call ${call.contact.name}`}>
-                        <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
-                          <Phone className="w-5 h-5" />
-                        </Button>
-                      </a>
-                    </div>
-                    <Separator />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
+          <div className="flex justify-around items-center max-w-md mx-auto h-20">
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'favourites' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('favourites')}>
+              <Star className="w-6 h-6" />
+              <span className="text-xs">Favourites</span>
+            </Button>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'recents' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('recents')}>
+              <History className="w-6 h-6" />
+              <span className="text-xs">Recents</span>
+            </Button>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'contacts' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('contacts')}>
+              <Users className="w-6 h-6" />
+              <span className="text-xs">Contacts</span>
+            </Button>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'keypad' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('keypad')}>
+              <Grid3x3 className="w-6 h-6" />
+              <span className="text-xs">Keypad</span>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
