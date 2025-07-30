@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "616998811645",
+    "project_id": "voice-contact-j3p88",
+    "storage_bucket": "voice-contact-j3p88.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616998811645:android:85daeb5e42466eaff2cb94",
+        "android_client_info": {
+          "package_name": "com.dhi1999raj.voicedialer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDD7RDqwvteEAU8j9dmsqOHjR-VkPQ7PUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
