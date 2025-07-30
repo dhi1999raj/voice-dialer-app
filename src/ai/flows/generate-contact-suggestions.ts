@@ -40,16 +40,16 @@ const prompt = ai.definePrompt({
   name: 'generateContactSuggestionsPrompt',
   input: {schema: GenerateContactSuggestionsInputSchema},
   output: {schema: GenerateContactSuggestionsOutputSchema},
-  prompt: `You are a helpful assistant designed to find a contact to call based on voice input.
+  prompt: `You are a helpful assistant that finds a contact to call based on voice input.
+The user said: "{{voiceInput}}"
+Here is the list of available contacts: {{contactList}}
 
-  The user said: "{{voiceInput}}"
-  Here is the list of available contacts: {{contactList}}
-  
-  Your task is to identify a single contact to call from the list.
-  - You MUST find the best, case-insensitive match for the "{{voiceInput}}" from the provided contact list.
-  - If you find a single, unambiguous match, return that contact's name in the 'contactToCall' field.
-  - If the input is ambiguous or matches multiple contacts (e.g., "John"), do not return any name.
-  - If no likely match is found, do not return any name.
+Your task is to identify a single contact to call from the list.
+- Find the best, case-insensitive match for the "{{voiceInput}}" from the provided contact list.
+- If you find a single, unambiguous match, return that contact's name in the 'contactToCall' field.
+- If the input is ambiguous or matches multiple contacts (e.g., "John"), do not return any name.
+- If no likely match is found, do not return any name.
+- ONLY return a name that is present in the contact list.
   `,
 });
 
@@ -64,3 +64,5 @@ const generateContactSuggestionsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,54 @@ export default function VoiceContactPage() {
     allContactsRef.current = allContacts;
   }, [allContacts]);
 
+  const handleVoiceCommand = useCallback(async (command: string) => {
+    setIsLoading(true);
+    setStatusText("Thinking...");
+    const currentContacts = allContactsRef.current;
+
+    if (currentContacts.length === 0) {
+        setStatusText("Please grant contact access first.");
+        toast({
+            title: "No Contacts",
+            description: "Please tap the 'Contacts' button to load your contacts first.",
+            variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+      const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
+        voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
+        contactList: currentContacts.map(c => c.name),
+      });
+
+      if (result.contactToCall) {
+        const foundContact = currentContacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
+        if (foundContact) {
+            setStatusText(`Calling ${foundContact.name}...`);
+            setTimeout(() => {
+                window.location.href = `tel:${foundContact.phone}`;
+            }, 1500);
+        } else {
+            setStatusText(`Could not find "${result.contactToCall}" in your list.`);
+        }
+      } else {
+        setStatusText("Sorry, I couldn't find anyone by that name.");
+      }
+    } catch (error) {
+      console.error("Error generating contact suggestions:", error);
+      setStatusText("There was an error. Please try again.");
+      toast({
+        title: "AI Suggestion Error",
+        description: "Could not get suggestions from the AI model.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]); 
+  
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -93,7 +141,7 @@ export default function VoiceContactPage() {
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setStatusText(`You said: "${transcript}"`);
-        handleVoiceCommand(transcript, allContactsRef.current);
+        handleVoiceCommand(transcript);
       };
 
       recognitionRef.current = recognition;
@@ -105,7 +153,7 @@ export default function VoiceContactPage() {
         variant: "destructive",
       });
     }
-  }, [toast, isLoading]); 
+  }, [toast, isLoading, handleVoiceCommand]); 
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
@@ -123,54 +171,6 @@ export default function VoiceContactPage() {
       setIsSheetOpen(true);
     } else {
       setIsSheetOpen(false);
-    }
-  };
-
-  const handleVoiceCommand = async (command: string, contacts: FetchedContact[]) => {
-    setIsLoading(true);
-    setStatusText("Thinking...");
-
-    if (contacts.length === 0) {
-        setStatusText("Please grant contact access first.");
-        toast({
-            title: "No Contacts",
-            description: "Please tap the 'Contacts' button to load your contacts first.",
-            variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-    }
-
-    try {
-      const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
-        voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
-        contactList: contacts.map(c => c.name),
-      });
-
-      if (result.contactToCall) {
-        const foundContact = contacts.find(contact => contact.name === result.contactToCall);
-        if (foundContact) {
-            setStatusText(`Calling ${foundContact.name}...`);
-            setTimeout(() => {
-                window.location.href = `tel:${foundContact.phone}`;
-            }, 1500);
-        } else {
-            // This case should ideally not happen if prompt works correctly
-            setStatusText(`Contact "${result.contactToCall}" not found in your list.`);
-        }
-      } else {
-        setStatusText("Sorry, I couldn't find anyone by that name.");
-      }
-    } catch (error) {
-      console.error("Error generating contact suggestions:", error);
-      setStatusText("There was an error. Please try again.");
-      toast({
-        title: "AI Suggestion Error",
-        description: "Could not get suggestions from the AI model.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -420,3 +420,5 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
+    
