@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
-import { mockCallHistory, type Call } from '@/lib/contacts';
+import { Call } from '@/lib/contacts';
 import { Input } from '@/components/ui/input';
 
 interface FetchedContact {
@@ -46,6 +46,7 @@ export default function VoiceContactPage() {
   const [activeTab, setActiveTab] = useState('favourites');
   const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [callHistory] = useState<Call[]>([]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -101,7 +102,7 @@ export default function VoiceContactPage() {
         variant: "destructive",
       });
     }
-  }, [toast]); // Simplified dependencies
+  }, [toast, isLoading]); 
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
@@ -256,7 +257,7 @@ export default function VoiceContactPage() {
               </SheetHeader>
               <div className="py-4 h-full overflow-y-auto">
                 <div className="space-y-2">
-                  {mockCallHistory.map((call) => (
+                  {callHistory.map((call) => (
                     <div key={call.id}>
                       <div className="flex items-center justify-between py-2">
                         <div className="flex items-center gap-4">
@@ -369,7 +370,7 @@ export default function VoiceContactPage() {
       <div className="w-full max-w-md mx-auto flex flex-col h-full flex-grow">
         <header className="flex items-center justify-between py-6">
           <div></div>
-          <h1 className="text-4xl font-bold text-primary font-headline">Voice Dialer</h1>
+          <h1 className="text-4xl font-bold text-primary font-headline">Voice Dial</h1>
           <Link href="/settings">
             <Button variant="ghost" size="icon" aria-label="Settings">
               <Settings className="w-6 h-6" />
@@ -378,11 +379,11 @@ export default function VoiceContactPage() {
         </header>
 
         <main className="flex flex-col items-center justify-center gap-6 flex-grow">
-          <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-28 h-28 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
+          <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-40 h-40 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
             {isLoading ? (
-              <Loader2 className="w-16 h-16 text-primary-foreground animate-spin" />
+              <Loader2 className="w-20 h-20 text-primary-foreground animate-spin" />
             ) : (
-              <Mic className="w-16 h-16 text-primary-foreground" />
+              <Mic className="w-20 h-20 text-primary-foreground" />
             )}
           </Button>
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
