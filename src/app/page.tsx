@@ -368,49 +368,7 @@ export default function VoiceContactPage() {
     <div className="bg-background min-h-screen flex flex-col items-center p-4 font-body text-foreground">
       <div className="w-full max-w-md mx-auto flex flex-col h-full flex-grow">
         <header className="flex items-center justify-between py-6">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="My Profile">
-                <Avatar>
-                  <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="person portrait" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <SheetHeader>
-                <SheetTitle>My Profile</SheetTitle>
-              </SheetHeader>
-              <div className="py-4 space-y-6">
-                <div className="flex flex-col items-center gap-4">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="person portrait" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
-                    <p className="text-xl font-semibold">Dhiraj Kumar</p>
-                    <p className="text-muted-foreground">+1 (234) 567-890</p>
-                  </div>
-                </div>
-                <Separator />
-                <nav className="space-y-2">
-                  <Link href="/settings" passHref>
-                    <Button variant="ghost" className="w-full justify-between">
-                      <div className="flex items-center gap-2">
-                        <Settings className="w-5 h-5" />
-                        <span>Settings</span>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" className="w-full justify-start gap-2 text-destructive hover:text-destructive">
-                    <LogOut className="w-5 h-5" />
-                    <span>Log Out</span>
-                  </Button>
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div></div>
           <h1 className="text-4xl font-bold text-primary font-headline">Voice Dialer</h1>
           <Link href="/settings">
             <Button variant="ghost" size="icon" aria-label="Settings">
@@ -489,5 +447,3 @@ export default function VoiceContactPage() {
     </div>
   );
 }
-
-    
