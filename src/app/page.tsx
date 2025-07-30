@@ -46,18 +46,12 @@ export default function VoiceContactPage() {
   const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [callHistory] = useState<Call[]>([]);
-  const allContactsRef = useRef(allContacts);
 
-  useEffect(() => {
-    allContactsRef.current = allContacts;
-  }, [allContacts]);
-
-  const handleVoiceCommand = useCallback(async (command: string) => {
+  const handleVoiceCommand = useCallback(async (command: string, contacts: FetchedContact[]) => {
     setIsLoading(true);
     setStatusText("Thinking...");
-    const currentContacts = allContactsRef.current;
 
-    if (currentContacts.length === 0) {
+    if (contacts.length === 0) {
         setStatusText("Please grant contact access first.");
         toast({
             title: "No Contacts",
@@ -71,11 +65,11 @@ export default function VoiceContactPage() {
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
         voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
-        contactList: currentContacts.map(c => c.name),
+        contactList: contacts.map(c => c.name),
       });
 
       if (result.contactToCall) {
-        const foundContact = currentContacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
+        const foundContact = contacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
         if (foundContact) {
             setStatusText(`Calling ${foundContact.name}...`);
             setTimeout(() => {
@@ -102,61 +96,72 @@ export default function VoiceContactPage() {
   
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        setStatusText("Listening...");
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-        if (!isLoading) {
-          setStatusText("Tap the mic to start");
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        let errorMessage = "An unknown error occurred.";
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          errorMessage = "Microphone access denied. Please allow microphone permissions in your browser settings.";
-        } else if (event.error === 'no-speech') {
-          errorMessage = "No speech detected. Please try again.";
-        }
-        setStatusText("Error listening. Try again.");
-        toast({
-          title: "Voice Recognition Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        setIsListening(false);
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setStatusText(`You said: "${transcript}"`);
-        handleVoiceCommand(transcript);
-      };
-
-      recognitionRef.current = recognition;
-    } else {
+    if (!SpeechRecognition) {
       setStatusText("Voice recognition not supported.");
       toast({
         title: "Unsupported Browser",
         description: "Your browser does not support the Web Speech API.",
         variant: "destructive",
       });
+      return;
     }
-  }, [toast, isLoading, handleVoiceCommand]); 
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setStatusText("Listening...");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setStatusText("Tap the mic to start");
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      let errorMessage = "An unknown error occurred.";
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        errorMessage = "Microphone access denied. Please allow microphone permissions in your browser settings.";
+      } else if (event.error === 'no-speech') {
+        errorMessage = "No speech detected. Please try again.";
+      }
+      setStatusText("Error listening. Try again.");
+      toast({
+        title: "Voice Recognition Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setStatusText(`You said: "${transcript}"`);
+      handleVoiceCommand(transcript, allContacts);
+    };
+
+    recognitionRef.current = recognition;
+
+  }, [toast, handleVoiceCommand, allContacts]);
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
+    
+    if (allContacts.length === 0) {
+        setStatusText("Please grant contact access first.");
+        toast({
+            title: "No Contacts",
+            description: "Please tap the 'Contacts' button to load your contacts first.",
+            variant: "destructive"
+        });
+        return;
+    }
+
     if (recognitionRef.current) {
       recognitionRef.current.start();
     }
