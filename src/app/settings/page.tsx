@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Link from 'next/link';
 import { ChevronLeft, Moon, Sun, Palette, Languages, Trash2, Info } from 'lucide-react';
@@ -17,6 +17,11 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [language, setLanguage] = useState('en-US');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleClearHistory = () => {
     // In a real app, you would clear localStorage or make an API call
@@ -49,15 +54,19 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="dark-mode" className="flex flex-col gap-1">
                   <span>Dark Mode</span>
-                  <span className="text-xs text-muted-foreground">
-                    {theme === 'dark' ? "Enabled" : "Disabled"}
-                  </span>
+                  {mounted && (
+                    <span className="text-xs text-muted-foreground">
+                      {theme === 'dark' ? "Enabled" : "Disabled"}
+                    </span>
+                  )}
                 </Label>
-                <Switch
-                  id="dark-mode"
-                  checked={theme === 'dark'}
-                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                />
+                {mounted && (
+                  <Switch
+                    id="dark-mode"
+                    checked={theme === 'dark'}
+                    onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
