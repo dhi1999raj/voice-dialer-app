@@ -122,7 +122,7 @@ export default function SettingsPage() {
             <CardContent>
               <div className="text-sm text-muted-foreground space-y-2">
                 <p>Voice Contact App v1.0.0</p>
-                <p>Made with ❤️ by Firebase Studio</p>
+                <p>Made with love by Dhiraj Kumar</p>
                  <Link href="#" className="text-primary hover:underline">
                     Send Feedback
                   </Link>
