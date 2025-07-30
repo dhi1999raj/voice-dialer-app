@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
@@ -188,12 +189,21 @@ export default function VoiceContactPage() {
               </CardContent>
             </Card>
           )}
+        </div>
 
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Call History</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Sheet>
+          <SheetTrigger asChild>
+            <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8">
+              <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Call History">
+                <History className="w-8 h-8 text-accent-foreground" />
+              </Button>
+            </div>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-4/5">
+            <SheetHeader>
+              <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Call History</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 h-full overflow-y-auto">
               <div className="space-y-2">
                 {mockCallHistory.map((call) => (
                   <div key={call.id}>
@@ -221,15 +231,9 @@ export default function VoiceContactPage() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8">
-          <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Keypad">
-            <Calculator className="w-8 h-8 text-accent-foreground" />
-          </Button>
-        </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
