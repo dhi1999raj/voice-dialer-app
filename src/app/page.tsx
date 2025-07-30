@@ -28,7 +28,7 @@ export default function VoiceContactPage() {
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
   const [dialerInput, setDialerInput] = useState("");
-  const [activeTab, setActiveTab] = useState('recents');
+  const [activeTab, setActiveTab] = useState('favourites');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -180,7 +180,6 @@ export default function VoiceContactPage() {
         <SheetContent
           side="bottom"
           className={`rounded-t-2xl ${activeTab === 'recents' ? 'h-4/5' : 'h-auto pb-8'}`}
-          // The onOpenChange on Sheet will handle closing, so we don't need interaction handlers here.
         >
           {activeTab === 'recents' && (
             <>
@@ -338,3 +337,5 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
+    
