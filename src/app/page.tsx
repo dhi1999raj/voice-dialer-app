@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3, User, LogOut, ChevronRight } from 'lucide-react';
+import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
@@ -447,3 +447,5 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
+    
