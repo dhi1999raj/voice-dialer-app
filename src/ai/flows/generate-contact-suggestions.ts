@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -22,7 +23,7 @@ export type GenerateContactSuggestionsInput = z.infer<
 const GenerateContactSuggestionsOutputSchema = z.object({
   suggestions: z
     .array(z.string())
-    .describe('A list of suggested contacts based on the voice input.'),
+    .describe('A list of suggested contacts based on the voice input. Can be empty.'),
 });
 export type GenerateContactSuggestionsOutput = z.infer<
   typeof GenerateContactSuggestionsOutputSchema
@@ -42,12 +43,13 @@ const prompt = ai.definePrompt({
 
   The user said: "{{voiceInput}}"
   Here is the list of available contacts: {{contactList}}
-  Suggest a list of contacts that the user might be trying to call.
-  If the voice input matches a contact in the contact list exactly, return only that contact.
-  Otherwise, suggest contacts that sound similar to the voice input, or that are likely matches given common nicknames.
-  Do not include any contacts that are not in the contact list.
-  Format the output as a JSON array of strings.
-  `, // Ensuring output is a JSON array of strings
+  
+  Your task is to suggest a list of contacts that the user might be trying to call.
+  - If the voice input exactly matches a contact in the contact list (case-insensitive), return only that contact.
+  - Otherwise, suggest contacts that sound similar to the voice input, or that are likely matches given common nicknames.
+  - If no likely matches are found in the contact list, return an empty array for the suggestions.
+  - Do not include any contacts that are not in the provided contact list.
+  `,
 });
 
 const generateContactSuggestionsFlow = ai.defineFlow(
