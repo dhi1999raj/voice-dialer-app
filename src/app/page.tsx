@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3 } from 'lucide-react';
+import { Mic, Phone, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings, Star, History, Users, Grid3x3, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +12,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
+import { detectSpamCall } from '@/ai/flows/detect-spam-call';
+import type { DetectSpamCallOutput } from '@/ai/flows/detect-spam-call';
 import { Call } from '@/lib/contacts';
 import { Input } from '@/components/ui/input';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
+
 
 interface FetchedContact {
   id: string;
@@ -21,6 +25,12 @@ interface FetchedContact {
   phone: string;
   initials: string;
   image?: string;
+}
+
+interface SpamCall {
+    phoneNumber: string;
+    isSpam: boolean;
+    reason?: string;
 }
 
 declare global {
@@ -47,13 +57,15 @@ export default function VoiceContactPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [callHistory] = useState<Call[]>([]);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [spamCall, setSpamCall] = useState<SpamCall | null>(null);
+  const [isCheckingSpam, setIsCheckingSpam] = useState(false);
 
 
-  const handleVoiceCommand = useCallback(async (command: string, contacts: FetchedContact[]) => {
+  const handleVoiceCommand = useCallback(async (command: string) => {
     setIsLoading(true);
     setStatusText("Thinking...");
 
-    if (contacts.length === 0) {
+    if (allContacts.length === 0) {
         setStatusText("Please grant contact access first.");
         toast({
             title: "No Contacts",
@@ -67,11 +79,11 @@ export default function VoiceContactPage() {
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
         voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
-        contactList: contacts.map(c => c.name),
+        contactList: allContacts.map(c => c.name),
       });
 
       if (result.contactToCall) {
-        const foundContact = contacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
+        const foundContact = allContacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
         if (foundContact) {
             setStatusText(`Calling ${foundContact.name}...`);
             setTimeout(() => {
@@ -94,7 +106,7 @@ export default function VoiceContactPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]); 
+  }, [toast, allContacts]); 
   
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -161,18 +173,25 @@ export default function VoiceContactPage() {
       }
       const transcript = event.results[0][0].transcript;
       setStatusText(`You said: "${transcript}"`);
-      handleVoiceCommand(transcript, allContacts);
+      handleVoiceCommand(transcript);
     };
 
     recognitionRef.current = recognition;
+
+    // Simulate an incoming call for demo purposes
+    const spamCallTimeout = setTimeout(() => {
+        const testNumber = '1-800-555-1234';
+        handleSpamCheck(testNumber);
+    }, 5000);
 
     return () => {
        if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
       }
+      clearTimeout(spamCallTimeout);
     }
 
-  }, [toast, allContacts, handleVoiceCommand]);
+  }, [toast, handleVoiceCommand]);
 
   const handleMicClick = () => {
     if (isListening || isLoading) {
@@ -240,6 +259,25 @@ export default function VoiceContactPage() {
     }
   };
   
+  const handleSpamCheck = async (phoneNumber: string) => {
+    setIsCheckingSpam(true);
+    try {
+        const result: DetectSpamCallOutput = await detectSpamCall({ phoneNumber });
+        if (result.isSpam) {
+            setSpamCall({ phoneNumber, ...result });
+        }
+    } catch (error) {
+        console.error("Error checking for spam:", error);
+        toast({
+            title: "Spam Check Error",
+            description: "Could not check if the call was spam.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsCheckingSpam(false);
+    }
+  };
+
   const CallTypeIcon = ({ type }: { type: Call['type'] }) => {
     const iconProps = { className: "w-4 h-4 mr-2" };
     switch (type) {
@@ -431,6 +469,32 @@ export default function VoiceContactPage() {
           <p className="text-muted-foreground text-center text-lg h-8 transition-opacity">{statusText}</p>
         </main>
 
+        <AlertDialog open={!!spamCall} onOpenChange={(open) => !open && setSpamCall(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                        <ShieldAlert className="w-6 h-6 text-destructive" />
+                        Potential Spam Call
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        The number <strong>{spamCall?.phoneNumber}</strong> is likely a spam call.
+                        {spamCall?.reason && <p className="mt-2">Reason: <em>{spamCall.reason}</em></p>}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <Button variant="destructive" onClick={() => setSpamCall(null)}>
+                        Decline
+                    </Button>
+                    <Button variant="secondary" onClick={() => {
+                        if(spamCall) window.location.href = `tel:${spamCall.phoneNumber}`;
+                        setSpamCall(null);
+                    }}>
+                        Answer
+                    </Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
         {renderContent()}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
@@ -457,3 +521,4 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
