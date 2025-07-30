@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming } from 'lucide-react';
+import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
 import { mockContacts, mockCallHistory, type Contact, type Call } from '@/lib/contacts';
+import { Input } from '@/components/ui/input';
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ export default function VoiceContactPage() {
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
+  const [dialerInput, setDialerInput] = useState("");
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -140,6 +142,27 @@ export default function VoiceContactPage() {
     }
   };
 
+  const dialerButtons = [
+    '1', '2', '3',
+    '4', '5', '6',
+    '7', '8', '9',
+    '*', '0', '#'
+  ];
+
+  const handleDialerClick = (key: string) => {
+    setDialerInput(prev => prev + key);
+  };
+
+  const handleDialerDelete = () => {
+    setDialerInput(prev => prev.slice(0, -1));
+  };
+  
+  const handleDialerCall = () => {
+    if (dialerInput) {
+      window.location.href = `tel:${dialerInput}`;
+    }
+  };
+
   return (
     <div className="bg-background min-h-screen flex flex-col items-center p-4 font-body text-foreground">
       <div className="w-full max-w-md mx-auto flex flex-col h-full">
@@ -193,13 +216,55 @@ export default function VoiceContactPage() {
 
         <Sheet>
           <SheetTrigger asChild>
+            <div className="fixed bottom-6 left-6 md:bottom-8 md:left-8">
+              <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Keypad">
+                <Calculator className="w-8 h-8 text-accent-foreground" />
+              </Button>
+            </div>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-auto pb-8 rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle className="flex items-center"><Calculator className="w-5 h-5 mr-2" /> Keypad</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 flex flex-col items-center">
+                <div className="relative w-full max-w-xs mb-4">
+                    <Input 
+                        readOnly 
+                        value={dialerInput}
+                        className="text-3xl h-14 text-center pr-10"
+                        placeholder="Enter number"
+                    />
+                    {dialerInput && (
+                        <Button onClick={handleDialerDelete} variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12">
+                            <Delete className="w-6 h-6" />
+                        </Button>
+                    )}
+                </div>
+                <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
+                    {dialerButtons.map((key) => (
+                        <Button key={key} onClick={() => handleDialerClick(key)} variant="outline" className="h-16 text-2xl font-bold">
+                            {key}
+                        </Button>
+                    ))}
+                </div>
+                 <div className="mt-4 w-full max-w-xs">
+                    <Button onClick={handleDialerCall} size="lg" className="w-full h-16 bg-green-500 hover:bg-green-600">
+                        <Phone className="w-6 h-6" />
+                    </Button>
+                </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet>
+          <SheetTrigger asChild>
             <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8">
               <Button size="icon" className="w-16 h-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl" aria-label="Open Call History">
                 <History className="w-8 h-8 text-accent-foreground" />
               </Button>
             </div>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-4/5">
+          <SheetContent side="bottom" className="h-4/5 rounded-t-2xl">
             <SheetHeader>
               <SheetTitle className="flex items-center"><History className="w-5 h-5 mr-2" /> Call History</SheetTitle>
             </SheetHeader>
