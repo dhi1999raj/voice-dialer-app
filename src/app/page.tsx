@@ -60,12 +60,18 @@ export default function VoiceContactPage() {
   const [spamCall, setSpamCall] = useState<SpamCall | null>(null);
   const [isCheckingSpam, setIsCheckingSpam] = useState(false);
 
+  const allContactsRef = useRef(allContacts);
+  useEffect(() => {
+    allContactsRef.current = allContacts;
+  }, [allContacts]);
 
   const handleVoiceCommand = useCallback(async (command: string) => {
     setIsLoading(true);
     setStatusText("Thinking...");
 
-    if (allContacts.length === 0) {
+    const currentContacts = allContactsRef.current;
+
+    if (currentContacts.length === 0) {
         setStatusText("Please grant contact access first.");
         toast({
             title: "No Contacts",
@@ -79,16 +85,14 @@ export default function VoiceContactPage() {
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
         voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
-        contactList: allContacts.map(c => c.name),
+        contactList: currentContacts.map(c => c.name),
       });
 
       if (result.contactToCall) {
-        const foundContact = allContacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
+        const foundContact = currentContacts.find(contact => contact.name.toLowerCase() === result.contactToCall?.toLowerCase());
         if (foundContact) {
             setStatusText(`Calling ${foundContact.name}...`);
-            setTimeout(() => {
-                window.location.href = `tel:${foundContact.phone}`;
-            }, 1500);
+            window.location.href = `tel:${foundContact.phone}`;
         } else {
             setStatusText(`Could not find "${result.contactToCall}" in your list.`);
         }
@@ -106,7 +110,7 @@ export default function VoiceContactPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, allContacts]); 
+  }, [toast]); 
   
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -135,11 +139,13 @@ export default function VoiceContactPage() {
     };
     
     recognition.onspeechend = () => {
-      silenceTimerRef.current = setTimeout(() => {
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
+        if (isListening) {
+          silenceTimerRef.current = setTimeout(() => {
+            if (recognitionRef.current) {
+              recognitionRef.current.stop();
+            }
+          }, 2000);
         }
-      }, 2000);
     };
 
     recognition.onend = () => {
@@ -189,9 +195,12 @@ export default function VoiceContactPage() {
         clearTimeout(silenceTimerRef.current);
       }
       clearTimeout(spamCallTimeout);
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
     }
 
-  }, [toast, handleVoiceCommand]);
+  }, [toast, handleVoiceCommand, isListening]);
 
   const handleMicClick = () => {
     if (isListening || isLoading) {
@@ -201,7 +210,7 @@ export default function VoiceContactPage() {
       return;
     };
     
-    if (allContacts.length === 0) {
+    if (allContactsRef.current.length === 0) {
         setStatusText("Please grant contact access first.");
         toast({
             title: "No Contacts",
@@ -212,7 +221,14 @@ export default function VoiceContactPage() {
     }
 
     if (recognitionRef.current) {
-      recognitionRef.current.start();
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error("Error starting recognition:", error);
+         if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+      }
     }
   };
   
@@ -521,3 +537,5 @@ export default function VoiceContactPage() {
     </div>
   );
 }
+
+    
