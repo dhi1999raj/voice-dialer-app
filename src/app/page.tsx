@@ -44,6 +44,7 @@ export default function VoiceContactPage() {
   const [dialerInput, setDialerInput] = useState("");
   const [activeTab, setActiveTab] = useState('favourites');
   const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -99,7 +100,7 @@ export default function VoiceContactPage() {
         variant: "destructive",
       });
     }
-  }, [isLoading, toast]);
+  }, [isLoading, toast, allContacts]); // Add allContacts to dependency array
 
   const handleMicClick = () => {
     if (isListening || isLoading) return;
@@ -109,18 +110,20 @@ export default function VoiceContactPage() {
   };
   
   const handleTabClick = async (tab: string) => {
-    if (tab === 'contacts') {
+    setActiveTab(tab);
+    if (tab === 'contacts' && allContacts.length === 0) {
       await handleContactsClick();
     }
-    setActiveTab(tab);
+    if (tab !== 'favourites') {
+      setIsSheetOpen(true);
+    } else {
+      setIsSheetOpen(false);
+    }
   };
 
   const handleVoiceCommand = async (command: string) => {
     setIsLoading(true);
     setStatusText("Thinking...");
-
-    const commandLower = command.toLowerCase();
-    let contactQuery = commandLower.replace(/call|dial/g, '').trim();
 
     if (allContacts.length === 0) {
         setStatusText("Please grant contact access first.");
@@ -135,7 +138,7 @@ export default function VoiceContactPage() {
 
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
-        voiceInput: contactQuery,
+        voiceInput: command.toLowerCase().replace(/call|dial/g, '').trim(),
         contactList: allContacts.map(c => c.name),
       });
 
@@ -145,7 +148,6 @@ export default function VoiceContactPage() {
 
         if (foundContacts.length === 1) {
           setStatusText(`Calling ${foundContacts[0].name}...`);
-          // Simulating call
           setTimeout(() => {
              window.location.href = `tel:${foundContacts[0].phone}`;
           }, 1500);
@@ -184,12 +186,11 @@ export default function VoiceContactPage() {
         if (contacts.length > 0) {
             const formattedContacts: FetchedContact[] = contacts.map((contact: any, index: number) => ({
                 id: `contact-${index}`,
-                name: contact.name[0] || '',
-                phone: contact.tel[0] || '',
-                initials: (contact.name[0] || '').split(' ').map((n: string) => n[0]).join(''),
+                name: (contact.name && contact.name[0]) || 'No Name',
+                phone: (contact.tel && contact.tel[0]) || '',
+                initials: ((contact.name && contact.name[0]) || 'NN').split(' ').map((n: string) => n[0]).join(''),
             }));
             setAllContacts(formattedContacts);
-            setActiveTab('contacts');
         }
     } catch (error) {
         console.error("Error fetching contacts:", error);
@@ -233,11 +234,11 @@ export default function VoiceContactPage() {
   };
   
   const renderContent = () => {
-    const isSheetOpen = activeTab !== 'favourites';
-    const handleSheetChange = (isOpen: boolean) => {
-      if (!isOpen) {
-        setActiveTab('favourites'); // or any default tab you prefer when closing
-      }
+    const handleSheetChange = (open: boolean) => {
+        setIsSheetOpen(open);
+        if (!open) {
+            setActiveTab('favourites');
+        }
     };
   
     return (
@@ -245,6 +246,7 @@ export default function VoiceContactPage() {
         <SheetContent
           side="bottom"
           className={`rounded-t-2xl ${activeTab === 'recents' || activeTab === 'contacts' ? 'h-4/5' : 'h-auto pb-8'}`}
+          onInteractOutside={(e) => e.preventDefault()} // Prevents closing on outside click
         >
           {activeTab === 'recents' && (
             <>
@@ -315,7 +317,7 @@ export default function VoiceContactPage() {
                   </div>
                 ) : (
                   <div className="text-center py-10">
-                    <p className="text-muted-foreground">No contacts found.</p>
+                    <p className="text-muted-foreground">No contacts loaded.</p>
                     <Button onClick={handleContactsClick} className="mt-4">Load Contacts</Button>
                   </div>
                 )}
