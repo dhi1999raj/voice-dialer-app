@@ -46,6 +46,8 @@ export default function VoiceContactPage() {
   const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [callHistory] = useState<Call[]>([]);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const handleVoiceCommand = useCallback(async (command: string, contacts: FetchedContact[]) => {
     setIsLoading(true);
@@ -115,11 +117,25 @@ export default function VoiceContactPage() {
     recognition.onstart = () => {
       setIsListening(true);
       setStatusText("Listening...");
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+    };
+    
+    recognition.onspeechend = () => {
+      silenceTimerRef.current = setTimeout(() => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+      }, 2000);
     };
 
     recognition.onend = () => {
       setIsListening(false);
       setStatusText("Tap the mic to start");
+       if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -140,6 +156,9 @@ export default function VoiceContactPage() {
     };
 
     recognition.onresult = (event: any) => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
       const transcript = event.results[0][0].transcript;
       setStatusText(`You said: "${transcript}"`);
       handleVoiceCommand(transcript, allContacts);
@@ -147,10 +166,21 @@ export default function VoiceContactPage() {
 
     recognitionRef.current = recognition;
 
+    return () => {
+       if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+    }
+
   }, [toast, allContacts, handleVoiceCommand]);
 
   const handleMicClick = () => {
-    if (isListening || isLoading) return;
+    if (isListening || isLoading) {
+      if(recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    };
     
     if (allContacts.length === 0) {
         setStatusText("Please grant contact access first.");
@@ -389,9 +419,11 @@ export default function VoiceContactPage() {
         </header>
 
         <main className="flex flex-col items-center justify-center gap-6 flex-grow">
-          <Button onClick={handleMicClick} disabled={isListening || isLoading} size="icon" className="w-48 h-48 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
+          <Button onClick={handleMicClick} disabled={isLoading} size="icon" className="w-48 h-48 rounded-full bg-primary hover:bg-primary/90 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
             {isLoading ? (
               <Loader2 className="w-24 h-24 text-primary-foreground animate-spin" />
+            ) : isListening ? (
+              <Mic className="w-24 h-24 text-primary-foreground" />
             ) : (
               <Mic className="w-24 h-24 text-primary-foreground" />
             )}
