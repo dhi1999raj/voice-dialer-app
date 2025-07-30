@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete } from 'lucide-react';
+import { Mic, Calculator, Phone, History, Loader2, PhoneOutgoing, PhoneMissed, PhoneIncoming, Delete, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -166,8 +166,12 @@ export default function VoiceContactPage() {
   return (
     <div className="bg-background min-h-screen flex flex-col items-center p-4 font-body text-foreground">
       <div className="w-full max-w-md mx-auto flex flex-col h-full">
-        <header className="text-center py-6">
+        <header className="flex items-center justify-between py-6">
+          <div className="w-10 h-10"></div>
           <h1 className="text-4xl font-bold text-primary font-headline">Voice Contact</h1>
+          <Button variant="ghost" size="icon" aria-label="Settings">
+            <Settings className="w-6 h-6" />
+          </Button>
         </header>
 
         <main className="flex flex-col items-center gap-6 my-4 flex-grow">
