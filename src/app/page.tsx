@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -10,25 +11,39 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { useToast } from "@/hooks/use-toast";
 import { generateContactSuggestions } from '@/ai/flows/generate-contact-suggestions';
 import type { GenerateContactSuggestionsOutput } from '@/ai/flows/generate-contact-suggestions';
-import { mockContacts, mockCallHistory, type Contact, type Call } from '@/lib/contacts';
+import { mockCallHistory, type Call } from '@/lib/contacts';
 import { Input } from '@/components/ui/input';
+
+interface FetchedContact {
+  id: string;
+  name: string;
+  phone: string;
+  initials: string;
+  image?: string;
+}
 
 declare global {
   interface Window {
     SpeechRecognition: any;
     webkitSpeechRecognition: any;
   }
+  interface Navigator {
+    contacts: {
+      select(properties: string[], options?: { multiple: boolean }): Promise<any[]>;
+    }
+  }
 }
 
 export default function VoiceContactPage() {
   const [isListening, setIsListening] = useState(false);
   const [statusText, setStatusText] = useState("Tap the mic to start");
-  const [suggestions, setSuggestions] = useState<Contact[]>([]);
+  const [suggestions, setSuggestions] = useState<FetchedContact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
   const [dialerInput, setDialerInput] = useState("");
   const [activeTab, setActiveTab] = useState('favourites');
+  const [allContacts, setAllContacts] = useState<FetchedContact[]>([]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -92,6 +107,13 @@ export default function VoiceContactPage() {
       recognitionRef.current.start();
     }
   };
+  
+  const handleTabClick = async (tab: string) => {
+    if (tab === 'contacts') {
+      await handleContactsClick();
+    }
+    setActiveTab(tab);
+  };
 
   const handleVoiceCommand = async (command: string) => {
     setIsLoading(true);
@@ -100,14 +122,25 @@ export default function VoiceContactPage() {
     const commandLower = command.toLowerCase();
     let contactQuery = commandLower.replace(/call|dial/g, '').trim();
 
+    if (allContacts.length === 0) {
+        setStatusText("Please grant contact access first.");
+        toast({
+            title: "No Contacts",
+            description: "Please tap the 'Contacts' button to load your contacts first.",
+            variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
       const result: GenerateContactSuggestionsOutput = await generateContactSuggestions({
         voiceInput: contactQuery,
-        contactList: mockContacts.map(c => c.name),
+        contactList: allContacts.map(c => c.name),
       });
 
       if (result.suggestions && result.suggestions.length > 0) {
-        const foundContacts = mockContacts.filter(contact => result.suggestions.includes(contact.name));
+        const foundContacts = allContacts.filter(contact => result.suggestions.includes(contact.name));
         setSuggestions(foundContacts);
 
         if (foundContacts.length === 1) {
@@ -133,6 +166,38 @@ export default function VoiceContactPage() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleContactsClick = async () => {
+    if (!('contacts' in navigator)) {
+        toast({
+            title: "Unsupported Feature",
+            description: "The Contact Picker API is not supported in your browser.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    try {
+        const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+        if (contacts.length > 0) {
+            const formattedContacts: FetchedContact[] = contacts.map((contact: any, index: number) => ({
+                id: `contact-${index}`,
+                name: contact.name[0] || '',
+                phone: contact.tel[0] || '',
+                initials: (contact.name[0] || '').split(' ').map((n: string) => n[0]).join(''),
+            }));
+            setAllContacts(formattedContacts);
+            setActiveTab('contacts');
+        }
+    } catch (error) {
+        console.error("Error fetching contacts:", error);
+        toast({
+            title: "Contacts Error",
+            description: "Failed to access your contacts. Please try again.",
+            variant: "destructive",
+        });
     }
   };
   
@@ -168,7 +233,7 @@ export default function VoiceContactPage() {
   };
   
   const renderContent = () => {
-    const isSheetOpen = activeTab === 'recents' || activeTab === 'keypad';
+    const isSheetOpen = activeTab !== 'favourites';
     const handleSheetChange = (isOpen: boolean) => {
       if (!isOpen) {
         setActiveTab('favourites'); // or any default tab you prefer when closing
@@ -179,7 +244,7 @@ export default function VoiceContactPage() {
       <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
         <SheetContent
           side="bottom"
-          className={`rounded-t-2xl ${activeTab === 'recents' ? 'h-4/5' : 'h-auto pb-8'}`}
+          className={`rounded-t-2xl ${activeTab === 'recents' || activeTab === 'contacts' ? 'h-4/5' : 'h-auto pb-8'}`}
         >
           {activeTab === 'recents' && (
             <>
@@ -214,6 +279,46 @@ export default function VoiceContactPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </>
+          )}
+           {activeTab === 'contacts' && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center"><Users className="w-5 h-5 mr-2" /> Contacts</SheetTitle>
+              </SheetHeader>
+              <div className="py-4 h-full overflow-y-auto">
+                {allContacts.length > 0 ? (
+                  <div className="space-y-2">
+                    {allContacts.map((contact) => (
+                      <div key={contact.id}>
+                        <div className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-4">
+                             <Avatar>
+                                <AvatarImage src={contact.image} alt={contact.name} data-ai-hint="person photo" />
+                                <AvatarFallback>{contact.initials}</AvatarFallback>
+                              </Avatar>
+                            <div>
+                              <p className="font-semibold">{contact.name}</p>
+                              <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                            </div>
+                          </div>
+                           <a href={`tel:${contact.phone}`} aria-label={`Call ${contact.name}`}>
+                            <Button variant="ghost" size="icon" className="text-accent rounded-full hover:bg-accent/10">
+                              <Phone className="w-5 h-5" />
+                            </Button>
+                          </a>
+                        </div>
+                        <Separator />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-muted-foreground">No contacts found.</p>
+                    <Button onClick={handleContactsClick} className="mt-4">Load Contacts</Button>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -315,19 +420,19 @@ export default function VoiceContactPage() {
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
           <div className="flex justify-around items-center max-w-md mx-auto h-20">
-            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'favourites' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('favourites')}>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'favourites' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleTabClick('favourites')}>
               <Star className="w-6 h-6" />
               <span className="text-xs">Favourites</span>
             </Button>
-            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'recents' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('recents')}>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'recents' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleTabClick('recents')}>
               <History className="w-6 h-6" />
               <span className="text-xs">Recents</span>
             </Button>
-            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'contacts' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('contacts')}>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'contacts' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleTabClick('contacts')}>
               <Users className="w-6 h-6" />
               <span className="text-xs">Contacts</span>
             </Button>
-            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'keypad' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => setActiveTab('keypad')}>
+            <Button variant="ghost" className={`flex flex-col h-auto items-center gap-1 ${activeTab === 'keypad' ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleTabClick('keypad')}>
               <Grid3x3 className="w-6 h-6" />
               <span className="text-xs">Keypad</span>
             </Button>
